@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Annonces</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Annonces disponibles</h1>
+  <nav>
+    <a href="index.html">Accueil</a>
+    <a href="demande.html">Demande de pièce</a>
+  </nav>
+</header>
+
+<div class="container grid">
+  <div class="card">
+    <h3>Boîte de vitesse Prado</h3>
+    <p>Année : 2008</p>
+    <p>📍 Conakry</p>
+    <a href="chat.html" class="btn">Chat vendeur</a>
+  </div>
+</div>
+
+</body>
+</html>bottom:60px;}
+.piece-card {background:white;border-radius:10px;margin-bottom:15px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.2);display:flex;align-items:center;}
+.piece-card img {width:80px;height:80px;object-fit:cover;border-radius:5px;margin:10px;}
+.piece-content {padding:10px;flex:1;}
+.piece-content h3 {margin:0 0 5px 0;font-size:16px;color:#333;}
+.piece-content p {margin:2px 0;font-size:13px;color:#555;}
+.contact-btn {display:inline-block;padding:5px 10px;margin-top:5px;background:#1e90ff;color:white;text-decoration:none;border-radius:5px;font-size:13px;}
+.contact-btn:hover {background:#0066cc;}
+form input, form button, select {width:100%;padding:8px;margin:5px 0;border-radius:5px;border:1px solid #ccc;box-sizing:border-box;}
+form button {background:#1e90ff;color:white;border:none;font-weight:bold;cursor:pointer;}
+form button:hover {background:#0066cc;}
+.bottom-menu {position:fixed;bottom:0;width:100%;display:flex;background:white;border-top:1px solid #ccc;}
+.menu-btn {flex:1;padding:12px;text-align:center;font-weight:bold;color:#1e90ff;cursor:pointer;font-size:14px;}
+.menu-btn.active {background:#1e90ff;color:white;}
+#add-piece-form, #search-bar, #filter-bar {display:none;}
+#search-bar input, #filter-bar select {width:100%;padding:8px;margin-bottom:10px;border-radius:5px;border:1px solid #ccc;box-sizing:border-box;}
+</style>
+</head>
+<body>
+
+<header><i class="fa-solid fa-car"></i> AutoPièces GN</header>
+
+<div class="container">
+  <!-- Barre de recherche -->
+  <div id="search-bar">
+    <input type="text" id="search-input" placeholder="Rechercher par nom ou voiture...">
+  </div>
+  
+  <!-- Barre de filtrage -->
+  <div id="filter-bar">
+    <select id="filter-car">
+      <option value="">Toutes les voitures</option>
+    </select>
+  </div>
+
+  <!-- Formulaire pour ajouter une pièce -->
+  <form id="add-piece-form">
+    <h3>Ajouter une pièce</h3>
+    <input type="text" id="piece-name" placeholder="Nom de la pièce" required>
+    <input type="text" id="car-brand" placeholder="Marque de voiture" required>
+    <input type="number" id="year" placeholder="Année" required>
+    <input type="number" id="price" placeholder="Prix en GNF" required>
+    <input type="text" id="contact" placeholder="Numéro ou WhatsApp" required>
+    <input type="text" id="photo-url" placeholder="Lien photo (URL)" required>
+    <button type="submit">Ajouter la pièce</button>
+  </form>
+
+  <!-- Liste des pièces -->
+  <div id="pieces-list"></div>
+</div>
+
+<!-- Menu fixe -->
+<div class="bottom-menu">
+  <div class="menu-btn active" id="menu-home"><i class="fa-solid fa-list"></i><br>Liste</div>
+  <div class="menu-btn" id="menu-add"><i class="fa-solid fa-plus"></i><br>Ajouter</div>
+  <div class="menu-btn" id="menu-search"><i class="fa-solid fa-magnifying-glass"></i><br>Rechercher</div>
+  <div class="menu-btn" id="menu-filter"><i class="fa-solid fa-filter"></i><br>Filtrer</div>
+</div>
+
+<script>
+const piecesList = document.getElementById('pieces-list');
+const form = document.getElementById('add-piece-form');
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
+const filterBar = document.getElementById('filter-bar');
+const filterSelect = document.getElementById('filter-car');
+
+let pieces = JSON.parse(localStorage.getItem('pieces')) || [];
+
+// Générer 100+ pièces si vide
+if(pieces.length === 0){
+  const voitures = ["Toyota Corolla","Mercedes C200","Honda Civic","Nissan X-Trail","BMW Série 3","Ford Fiesta","Hyundai Elantra","Volkswagen Golf","Renault Clio","Kia Rio"];
+  const piecesTypes = ["Alternateur","Frein à disque","Pompe à eau","Amortisseur","Filtre à huile","Batterie","Bougie","Radiateur","Embrayage","Filtre à air"];
+  voitures.forEach(voiture=>{
+    piecesTypes.forEach(pType=>{
+      pieces.push({
+        name:pType,
+        brand:voiture,
+        year:2015 + Math.floor(Math.random()*5),
+        price:100000 + Math.floor(Math.random()*100000),
+        contact:"224600000000",
+        photo:"https://via.placeholder.com/80x80?text="+encodeURIComponent(pType+"-"+voiture)
+      });
+    });
+  });
+  localStorage.setItem('pieces',JSON.stringify(pieces));
+}
+
+// Remplir filtre voitures
+const carsSet = new Set(pieces.map(p=>p.brand));
+carsSet.forEach(car=>{
+  const option=document.createElement('option');
+  option.value=car; option.textContent=car;
+  filterSelect.appendChild(option);
+});
+
+function displayPieces(filter='',carFilter=''){
+  piecesList.innerHTML='';
+  pieces.filter(p=>
+    (p.name.toLowerCase().includes(filter) || p.brand.toLowerCase().includes(filter)) &&
+    (carFilter==='' || p.brand===carFilter)
+  ).forEach(p=>{
+    const card=document.createElement('div');
+    card.classList.add('piece-card');
+    card.innerHTML=`
+      <img src="${p.photo}" alt="Pièce auto">
+      <div class="piece-content">
+        <h3>${p.name}</h3>
+        <p>Voiture: ${p.brand}</p>
+        <p>Année: ${p.year}</p>
+        <p>Prix: ${p.price} GNF</p>
+        <a class="contact-btn" href="https://wa.me/${p.contact}" target="_blank"><i class="fa-brands fa-whatsapp"></i> Contacter</a>
+      </div>
+    `;
+    piecesList.appendChild(card);
+  });
+}
+
+displayPieces();
+
+form.addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('piece-name').value;
+  const brand=document.getElementById('car-brand').value;
+  const year=document.getElementById('year').value;
+  const price=document.getElementById('price').value;
+  const contact=document.getElementById('contact').value;
+  const photo=document.getElementById('photo-url').value;
+  pieces.push({name,brand,year,price,contact,photo});
+  localStorage.setItem('pieces',JSON.stringify(pieces));
+  displayPieces();
+  form.reset();
+  // Ajouter au filtre si nouveau
+  if(!Array.from(filterSelect.options).some(opt=>opt.value===brand)){
+    const option=document.createElement('option');
+    option.value=brand; option.textContent=brand;
+    filterSelect.appendChild(option);
+  }
+});
+
+// Menu navigation
+const menuHome=document.getElementById('menu-home');
+const menuAdd=document.getElementById('menu-add');
+const menuSearch=document.getElementById('menu-search');
+const menuFilter=document.getElementById('menu-filter');
+const menuBtns=[menuHome,menuAdd,menuSearch,menuFilter];
+
+menuHome.addEventListener('click',()=>{
+  piecesList.style.display='block';
+  form.style.display='none';
+  searchBar.style.display='none';
+  filterBar.style.display='none';
+  menuBtns.forEach(btn=>btn.classList.remove('active'));
+  menuHome.classList.add('active');
+});
+menuAdd.addEventListener('click',()=>{
+  piecesList.style.display='none';
+  form.style.display='block';
+  searchBar.style.display='none';
+  filterBar.style.display='none';
+  menuBtns.forEach(btn=>btn.classList.remove('active'));
+  menuAdd.classList.add('active');
+});
+menuSearch.addEventListener('click',()=>{
+  piecesList.style.display='block';
+  form.style.display='none';
+  searchBar.style.display='block';
+  filterBar.style.display='none';
+  menuBtns.forEach(btn=>btn.classList.remove('active'));
+  menuSearch.classList.add('active');
+});
+menuFilter.addEventListener('click',()=>{
+  piecesList.style.display='block';
+  form.style.display='none';
+  searchBar.style.display='none';
+  filterBar.style.display='block';
+  menuBtns.forEach(btn=>btn.classList.remove('active'));
+  menuFilter.classList.add('active');
+});
+
+searchInput.addEventListener('input',()=>{
+  displayPieces(searchInput.value.toLowerCase(),filterSelect.value);
+});
+filterSelect.addEventListener('change',()=>{
+  displayPieces(searchInput.value.toLowerCase(),filterSelect.value);
+});
+</script>
+</body>
+</html>
